@@ -1,0 +1,25 @@
+name: Nightly Backup
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump database
+        env:
+          PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: |
+          if [ -z "${PROD_DATABASE_URL}" ]; then
+            echo "PROD_DATABASE_URL secret is required" >&2
+            exit 1
+          fi
+          pg_dump "${PROD_DATABASE_URL}" > backup.sql
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup
+          path: backup.sql
